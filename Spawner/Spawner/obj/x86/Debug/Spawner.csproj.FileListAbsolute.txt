@@ -1,0 +1,5 @@
+c:\users\i67077\documents\visual studio 2010\Projects\Spawner\Spawner\bin\Debug\Spawner.exe
+c:\users\i67077\documents\visual studio 2010\Projects\Spawner\Spawner\bin\Debug\Spawner.pdb
+c:\users\i67077\documents\visual studio 2010\Projects\Spawner\Spawner\obj\x86\Debug\ResolveAssemblyReference.cache
+c:\users\i67077\documents\visual studio 2010\Projects\Spawner\Spawner\obj\x86\Debug\Spawner.exe
+c:\users\i67077\documents\visual studio 2010\Projects\Spawner\Spawner\obj\x86\Debug\Spawner.pdb

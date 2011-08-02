@@ -1,0 +1,472 @@
+package goldengine;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Arrays;
+import java.util.Map;
+import java.io.*;
+
+public class AST {
+	public static class variable
+	{
+		int myType;
+		//keep track of the value of the Program or CPU
+		//Program will be a file name
+		//CPU will be an array of integers
+		int[] cores;
+		String ProgramName;
+		ArrayList<Id> subPrograms = new ArrayList<Id>();
+		Id coresToRunOn;
+		//String[] subPrograms;
+		
+		//constructor
+		public variable(Statement node)
+		{
+			if(node instanceof CPU)
+			{
+				this.myType = 0;
+				this.cores = ((CPU) node).cores;
+			}
+			else if(node instanceof Program)
+			{
+				this.myType = 1;
+				this.ProgramName = ((Program) node).ProgramName.id;
+			}
+		}
+		public void printInfo()
+		{
+			if(this.myType == 0)
+			{
+				System.out.println("\tCores for this CPU Object: ");
+				for(int i=0; i < this.cores.length; i++)
+				{
+					System.out.print("\t" + this.cores[i]);
+				}
+				System.out.print('\n');
+			}
+			else
+			{
+				System.out.println("\tProgram FileName: " + this.ProgramName);
+			}
+		}
+		public void addSubProgram(Id programID)
+		{
+			this.subPrograms.add(programID);
+		}
+		//public void setCPUAffinity(Id cores)
+		public void setCPUAffinity()
+		{
+			//this.coresToRunOn = cores;
+		}
+	}
+	public enum Type {CPU, Program};
+	public interface Node {
+		<T> T accept (Visitor<T> v);
+	}
+	public interface Visitor<T> {
+		T visit (Instructions instruction);
+		T visit (AddSubProgram addsubprogram);
+		T visit (RunProgram runprogram);
+		T visit (RunSubPrograms runsubprograms);
+		T visit (Assign assign); //needed
+		T visit (AssignCPU assignCPU); //needed
+		T visit (Id id); //needed
+		T visit (CPU cpu); //needed
+		T visit (Program program); //needed
+	}
+	public interface Statement extends Node {}
+	
+	/* NOT SURE */
+	public static class Instructions implements Statement {
+		Statement[] instructions;
+		public Instructions (Statement ... instructions) {
+			this.instructions = instructions;
+		}
+		public <T> T accept(Visitor<T> v) 
+		{ 
+			System.out.println("Visiting Instructions");
+			for(int i=0; i < this.instructions.length; i++)
+			{
+				this.instructions[i].accept(v);
+			}
+			return v.visit(this); 
+		}		
+	} 
+	
+	public static Instructions instructions(Statement ... instructions)//ASK ABOUT THIS LINE!
+	{
+		//System.out.println("Number of instructions: " + instructions.length);
+		return new Instructions(instructions);
+	}
+	
+	public static class Id implements Node {
+		public String id;
+		public Id (String id) { this.id = id; }
+		public <T> T accept(Visitor<T> v) 
+		{
+			System.out.println("Visiting an ID");
+			return v.visit(this); 
+		}		
+	}
+	public static Id id (String id) { return new Id (id); }
+	
+	public static class Assign implements Statement {
+		Id variable; Statement value;
+		public Assign (Id variable, Statement value) { this.variable = variable; this.value = value; }
+		public <T> T accept(Visitor<T> v) 
+		{ 
+			System.out.println("Visiting an Assign");
+			variable.accept(v);
+			value.accept(v);
+			return v.visit(this); 
+		}		
+	}
+	public static AssignCPU assignCPU (Id program, Id CPU) { return new AssignCPU (program, CPU); }
+	
+	public static class AssignCPU implements Statement {
+		Id thisProgram; Id thisCPU;
+		public AssignCPU (Id thisProgram, Id thisCPU) { this.thisProgram = thisProgram; this.thisCPU = thisCPU; }
+		public <T> T accept(Visitor<T> v) 
+		{ 
+			System.out.println("Visiting an AssignCPU");
+			this.thisProgram.accept(v);
+			this.thisCPU.accept(v);
+			return v.visit(this); 
+		}		
+	}
+	public static Assign assign (Id var, Statement val) { return new Assign (var, val); }
+	
+	public static class AddSubProgram implements Statement {
+		Id parentProgram;
+		Id Program;
+		//Id CPU;
+		public AddSubProgram (Id parentProgram, Id Program/*, Id CPU*/) { 
+			this.parentProgram = parentProgram; 
+			this.Program = Program;
+			//this.CPU = CPU;
+		}
+		public <T> T accept(Visitor<T> v) 
+		{ 
+			System.out.println("Visiting a AddSubProgram");
+			this.parentProgram.accept(v);
+			this.Program.accept(v);
+			//this.CPU.accept(v);
+			return v.visit(this); 
+		}		
+	}
+	public static AddSubProgram addsubprogram (Id parentProgram, Id Program/*, Id CPU*/) {
+		return new AddSubProgram (parentProgram, Program/*, CPU*/); 
+	}
+	
+	public static class Program implements Statement {
+		Id ProgramName;
+		Id CPU;
+		public Program (Id ProgramName/*, Id CPU*/) { 
+			this.ProgramName = ProgramName;
+			/*this.CPU = CPU;*/
+		}
+		public <T> T accept(Visitor<T> v) 
+		{
+			System.out.println("Visiting a Program");
+			v.visit(this.CPU);
+			v.visit(this.ProgramName);
+			return v.visit(this); 
+		}		
+	}
+	public static Program Program (Id ProgramName/*, Id CPU*/) {
+		return new Program (ProgramName/*, CPU*/); 
+	}
+	
+	
+	public static class RunProgram implements Statement {
+		Id Program;
+		public RunProgram (Id Program) { 
+			this.Program = Program;
+		}
+		public <T> T accept(Visitor<T> v) {
+			System.out.println("Visiting a RunProgram");
+			return v.visit(this); 
+		}		
+	}
+	public static RunProgram runprogram (Id Program) {
+		return new RunProgram (Program); 
+	}
+	
+	public static class RunSubPrograms implements Statement {
+		Id ParentProgram;
+		public RunSubPrograms (Id ParentProgram) { 
+			this.ParentProgram = ParentProgram;
+		}
+		public <T> T accept(Visitor<T> v) 
+		{
+			System.out.println("Visiting a RunSubPrograms");
+			this.ParentProgram.accept(v);
+			
+			return v.visit(this); 
+		}		
+	}
+	public static RunSubPrograms runsubprogram (Id Program) {
+		return new RunSubPrograms (Program); 
+	}
+	
+	public static class CPU implements Statement {
+		int[] cores;
+		public CPU (int[] cores) { 
+			this.cores = cores;
+		}
+		public <T> T accept(Visitor<T> v) 
+		{
+			System.out.println("Visiting a CPU");
+			return v.visit(this); 
+		}		
+	}
+	public static CPU cpu (int ...cpu) {
+		return new CPU (cpu); 
+	}
+	
+	/*public static class Program implements Statement {
+		Id Program;
+		public Program (Id Program) { 
+			this.Program = Program;
+		}
+		public <T> T accept(Visitor<T> v) { return v.visit(this); }		
+	}
+	public static Program program (Id program) {
+		return new Program (program); 
+	}*/
+	 
+	public static class StatementInterpreter implements Visitor<Node> {
+		public HashMap<String, variable> symbols;
+		public HashMap<Id, variable> subPrograms = new HashMap<Id, variable>(); //mainprogram, subprogram
+		ArrayList<Thread> threads = new ArrayList<Thread>();
+		
+		
+		public StatementInterpreter() {
+			this.symbols = new HashMap<String, variable>();
+		}
+		
+		/* Update the state for each of these node types */
+		@Override
+		public Node visit(Instructions instruction) {
+			// not much happens here
+			return null;
+		}
+		@Override
+		public Node visit(AddSubProgram addsubprogram) {
+			
+			//check to make sure parent program exists in symbol table, and is a Program
+			if(symbols.containsKey(addsubprogram.parentProgram.id))
+			{
+				if(symbols.get(addsubprogram.parentProgram.id).myType == 1)
+				{
+					//check to make sure the child program exists in the symbol table, and is a Program
+					if(symbols.containsKey(addsubprogram.Program.id))
+					{
+						if(symbols.get(addsubprogram.Program.id).myType == 1)
+						{
+							symbols.get(addsubprogram.parentProgram.id).addSubProgram(addsubprogram.Program);
+						}
+						else
+						{
+							System.out.println("ID ("+ addsubprogram.Program.id +") is of the wrong type.");
+						}
+					}
+					else
+					{
+						System.out.println("Program ("+ addsubprogram.Program.id +") doesn't exist, cannot run it.");
+					}
+				}
+			}
+			return null;
+		}
+		@Override
+		public Node visit(RunProgram runprogram) {
+			// TODO Auto-generated method stub
+			//
+			if(symbols.containsKey(runprogram.Program.id))
+			{
+				if(symbols.get(runprogram.Program.id).myType == 1)
+				{
+					String filename = symbols.get(runprogram.Program.id).ProgramName;
+					int[] cores = {-1};
+					if(symbols.get(runprogram.Program.id).cores != null)
+					{
+						cores = symbols.get(runprogram.Program.id).cores;
+					}
+					System.out.println("PLACEHOLDER FOR RUNNING " + filename);
+					System.out.print("\tCores:");
+					for(int i=0; i < cores.length; i++)
+					{
+						System.out.print(cores[i]);
+					}
+					System.out.print("\n");
+					
+					try
+					{
+						String ls_str;
+						System.out.println("Running " + filename);
+						//Runtime runtime = Runtime.getRuntime();
+						//String cmd = "cmd /C powershell.exe C:\\Users\\i67077\\Desktop\\JS\\" + filename;
+						String cmd = "\"C:\\Users\\i67077\\Documents\\Visual Studio 2010\\Projects\\Spawner\\Spawner\\bin\\Debug\\spawner.exe\"";
+						//String cmd = "spawner.exe";
+					    //Process process = runtime.exec(cmd);
+					    
+					    Runtime runtime = Runtime.getRuntime();
+					    Process process = runtime.exec(cmd);
+					    DataInputStream ls_in = new DataInputStream(
+                                process.getInputStream());
+
+						try {
+						while ((ls_str = ls_in.readLine()) != null) {
+						  System.out.println(ls_str);
+						}
+						} catch (IOException e) {
+						System.exit(0);
+						}
+					}
+					catch (IOException e)
+					{
+						System.out.println(e.getMessage());
+					}
+				}
+				else
+				{
+					System.out.println("ID ("+ runprogram.Program.id +") is of the wrong type.");
+				}
+			}
+			else
+			{
+				System.out.println("Program ("+ runprogram.Program.id +") doesn't exist, cannot run it.");
+			}
+			return null;
+		}
+		@Override
+		public Node visit(RunSubPrograms runsubprograms) {
+			// TODO Auto-generated method stub
+			if(symbols.containsKey(runsubprograms.ParentProgram.id))
+			{
+				if(symbols.get(runsubprograms.ParentProgram.id).myType == 1)
+				{
+					System.out.println("Sub Programs of " + runsubprograms.ParentProgram.id);
+					ArrayList<Id> subPrograms = symbols.get(runsubprograms.ParentProgram.id).subPrograms;
+					for(int i=0; i < subPrograms.size(); i++)
+					{
+						String filename = symbols.get(subPrograms.get(i).id).ProgramName;
+						int cores[] = {-1};
+						if(symbols.get(subPrograms.get(i).id).cores != null)
+						{
+							cores = symbols.get(subPrograms.get(i).id).cores;
+						}
+						
+						try
+						{
+							System.out.println("Running" + filename);
+							Runtime runtime = Runtime.getRuntime();
+						    Process process = runtime.exec("ps " + filename);
+						    //InputStream is = process.getInputStream();
+						    //InputStreamReader isr = new InputStreamReader(is);
+						    //BufferedReader br = new BufferedReader(isr);
+						}
+						catch (IOException e)
+						{
+							System.out.println(e.getMessage());
+						}
+						
+						//replace this with code to run the script
+						System.out.println("\tPlaceHolder for running " + filename);
+						System.out.print("\tCores:");
+						for(int j=0; j < cores.length; j++)
+						{
+							System.out.print(cores[j]);
+						}
+						System.out.print("\n");
+					}
+				}
+				else
+				{
+					System.out.println("ID ("+ runsubprograms.ParentProgram.id +") is of the wrong type.");
+				}
+			}
+			else
+			{
+				System.out.println("Program ("+ runsubprograms.ParentProgram.id +") doesn't exist, cannot run it.");
+			}
+			return null;
+		}
+		@Override
+		public Node visit(Assign assign) {
+			// TODO Auto-generated method stub
+			symbols.put(assign.variable.id, new variable(assign.value));
+			return null;
+		}
+		public Node visit(AssignCPU assignCPU) {
+			// TODO Auto-generated method stub
+			variable myProgram = symbols.get(assignCPU.thisProgram.id);
+			System.out.println("Program Name: " + myProgram.ProgramName);
+			variable myCPU = symbols.get(assignCPU.thisCPU.id);
+			/*System.out.println("CORES: ");
+			for(int i=0; i < myCPU.cores.length; i++)
+			{
+				System.out.println(myCPU.cores[i]);
+			}*/
+			myProgram.cores = myCPU.cores;
+			
+			//System.out.println("Cores:" + symbols.get(assignCPU.thisProgram.id).cores.length);
+			System.out.print("ProgramName: " + myProgram.ProgramName + "Cores: ");
+			for(int i=0; i < myProgram.cores.length; i++)
+			{
+				System.out.print(myProgram.cores[i]);
+			}
+			System.out.print("\n");
+			return null;
+		}
+		@Override
+		public Node visit(Id id) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		@Override
+		public Node visit(CPU cpu) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		@Override
+		public Node visit(Program program) {
+			// TODO Auto-generated method stub
+			
+			return null;
+		}
+	}
+	public static void main (String[] args) {
+		Node sample = instructions(
+				assign(id("cpuOne"),cpu(0,1)),
+				assign(id("cpuTwo"),cpu(2)),
+				assign(id("cpuThree"),cpu(3)),
+				assign(id("mainProgram"), Program(id("mainProgram.ps1")/*, id("cpuOne")*/)),
+				assignCPU(id("mainProgram"), id("cpuOne")),
+				//assign(id("subProgramOne"), Program(id("subProgramOne.js")/*, id("cpuOne")*/)),
+				//assignCPU(id("subProgramOne"), id("cpuTwo")),
+				//assign(id("subProgramTwo"), Program(id("subProgramTwo.js")/*, id("cpuTwo")*/)),
+				//assignCPU(id("subProgramTwo"), id("cpuThree")),
+				//addsubprogram(id("mainProgram"), id("subProgramOne")/*, id("cpuOne")*/),
+				//addsubprogram(id("mainProgram"), id("subProgramTwo")/*, id("cpuOne")*/),
+				runprogram(id("mainProgram")),
+				runsubprogram(id("mainProgram"))
+				);
+		
+		StatementInterpreter runner = new StatementInterpreter();
+		sample.accept(runner);
+		
+		/*System.out.println("Printing our symbol table:");
+		Iterator it = runner.symbols.entrySet().iterator();
+		    while (it.hasNext()) {
+		        Map.Entry pairs = (Map.Entry)it.next();
+		        System.out.println(pairs.getKey());
+		        ((variable) pairs.getValue()).printInfo();
+		    }*/		    
+	}
+	
+	
+}
