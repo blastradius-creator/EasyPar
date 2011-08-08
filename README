@@ -1,0 +1,10 @@
+EasyPar - Compiler Design Final Project
+By: James Bachand
+
+1. AST -- The AST is constructed in GoldEngine\AST.JAVA --> StatementInterpreter
+2. Parser -- Parser was attempted, and failed to implemented through MyParser.Java (in default package)
+3. Semantic Analysis -- Is implemented within the StatementInterpreter by cross referencing the symbol table to ensure that each node in the AST is meaningful
+	I check to the existance of a Program in the symbol table before running it, as well as type checking, to make sure that I am not trying to run a "CPU".
+4. CodeGeneration\Interpreter -- I interpret the code within the StatementInterpreter, and call an external executable (Spawner.exe) to interact with the operating system.
+
+	
