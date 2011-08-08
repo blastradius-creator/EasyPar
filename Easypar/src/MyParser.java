@@ -1,9 +1,6 @@
 
 import java.io.*;
-
 import goldengine.*;
-import goldengine.AST.Instructions;
-import goldengine.AST.*;
 
 /*
  * Licensed Material - Property of Matthew Hawkins (hawkini@4email.net) 
@@ -43,7 +40,7 @@ public class MyParser implements GPMessageConstants
 
     private interface RuleConstants
     {
-       final int RULE_INSTRUCTIONS                                                                      =  0;  // <INSTRUCTIONS> ::= <STMT> <STMT>
+       final int RULE_INSTRUCTIONS                                                                      =  0;  // <INSTRUCTIONS> ::= <INSTRUCTIONS> <STMT>
        final int RULE_INSTRUCTIONS2                                                                     =  1;  // <INSTRUCTIONS> ::= <STMT>
        final int RULE_STMT_IDENTIFIER_EQ_SEMI                                                           =  2;  // <STMT> ::= <TYPE> IDENTIFIER '=' <EXPR> ';'
        final int RULE_STMT_ADDSUBPROGRAMLPARAN_IDENTIFIER_COMMA_IDENTIFIER_COMMA_IDENTIFIER_RPARAN_SEMI =  3;  // <STMT> ::= 'addSubProgram(' IDENTIFIER ',' IDENTIFIER ',' IDENTIFIER ')' ';'
@@ -109,6 +106,10 @@ public class MyParser implements GPMessageConstants
 
        boolean done = false;
        int response = -1;
+       
+       //my stuff
+       AST.Node currentNode;
+       String currentString = "";
 
        while(!done)
        {
@@ -136,28 +137,15 @@ public class MyParser implements GPMessageConstants
                       property to your own customized class. If this is not the case,
                       this message can be ignored and the Reduction object will be used
                       to store the parse tree.  */
-            	   	
-            	   	System.out.println("============");
-            	   	System.out.println("CurrentData: " + parser.currentToken().getData().toString());
-            	   	System.out.println("CurrentToken: " + parser.currentToken().getText().toString());
-              	 	System.out.println("CurrentToken Name: " + parser.currentToken().getName().toString());
+
                       switch(parser.currentReduction().getParentRule().getTableIndex())
                       {
                          case RuleConstants.RULE_INSTRUCTIONS:
-                        	 //System.out.println("Definition: " + parser.currentReduction().getParentRule().definition().toString());
-                        	 /*System.out.println("Token Count : ");
-                        	 for(int i=0; i < parser.currentReduction().getTokenCount(); i++)
-                        	 {
-                        		 System.out.println("\t Token (" + i + "): " + parser.currentReduction().getToken(i).toString());
-                        	 }*/
-                        	 //<INSTRUCTIONS> ::= <STMT> <STMT>
-                        	 //System.out.println(parser.currentReduction().getParentRule().definition().);
-                        	 //parser.currentReduction().getParentRule().
-                    
-                        	 AST.instructions();
+                            //<INSTRUCTIONS> ::= <INSTRUCTIONS> <STMT>
                             break;
                          case RuleConstants.RULE_INSTRUCTIONS2:
                             //<INSTRUCTIONS> ::= <STMT>
+                        	 parser.currentReduction().getToken(0);
                             break;
                          case RuleConstants.RULE_STMT_IDENTIFIER_EQ_SEMI:
                             //<STMT> ::= <TYPE> IDENTIFIER '=' <EXPR> ';'
@@ -179,38 +167,47 @@ public class MyParser implements GPMessageConstants
                             break;
                          case RuleConstants.RULE_EXPR_CPULPARAN_RPARAN:
                             //<EXPR> ::= 'CPU(' <CORES> ')'
+                        	 for(int i=0; i < parser.currentReduction().getTokenCount(); i++)
+                        	 {
+                        		 //System.out.println("TOKEN: " + parser.currentReduction().getToken(i) + " | " + parser.currentReduction().getToken(i).getData());
+                        	 }
                             break;
                          case RuleConstants.RULE_EXPR_PROGRAMLPARAN_RPARAN:
                             //<EXPR> ::= 'Program(' ')'
-                        	 
                             break;
                          case RuleConstants.RULE_EXPR_PROGRAMLPARAN_QUOTE_QUOTE_RPARAN:
                             //<EXPR> ::= 'Program(' '"' <FILENAME> '"' ')'
                             break;
                          case RuleConstants.RULE_CORES_COMMA:
                             //<CORES> ::= <CORES> ',' <List Item>
+                        	 System.out.println("Token: " + parser.currentToken().getData());
+                        	 for(int i=0; i < parser.currentReduction().getTokenCount(); i++)
+                        	 {
+                        		 System.out.println("TOKEN: " + parser.currentReduction().getToken(i) + " | " + parser.currentReduction().getToken(i).getData());
+                        	 }
+                        	 currentString = currentString + ",";
                             break;
                          case RuleConstants.RULE_CORES:
                             //<CORES> ::= <List Item>
+                        	 for(int i=0; i < parser.currentReduction().getTokenCount(); i++)
+                        	 {
+                        		 System.out.println("TOKEN: " + parser.currentReduction().getToken(i) + " | " + parser.currentReduction().getToken(i).getData());
+                        	 }
                             break;
                          case RuleConstants.RULE_LISTITEM_NUMBER:
                             //<List Item> ::= NUMBER
+                        	 /*for(int i=0; i < parser.currentReduction().getTokenCount(); i++)
+                        	 {
+                        		 System.out.println("TOKEN: " + parser.currentReduction().getToken(i) + " | " + parser.currentReduction().getToken(i).getData());
+                        	 }*/
+                        	 currentString += parser.currentReduction().getToken(0).getData();
                             break;
                          case RuleConstants.RULE_FILENAME_IDENTIFIER_DOT_IDENTIFIER:
                             //<FILENAME> ::= IDENTIFIER '.' IDENTIFIER
-                        	 
-                        	 String filenameSTR = "";
-                        	 for(int i=0; i < parser.currentReduction().getTokenCount(); i++)
-                        	 {
-                        		 filenameSTR += parser.currentReduction().getToken(i).getData().toString();
-                        	 }
-                        	 System.out.println("Filename: " + filenameSTR);
-                        	 AST.id(filenameSTR); 
-                        	 System.out.println("ParentRule: " + parser.currentReduction().getParentRule().definition());
-                        	 //AST.id();
                             break;
                       }
-                      System.out.println("============");
+                      System.out.println("Current String: " + currentString);
+
                           //Parser.Reduction = //Object you created to store the rule
 
                     // ************************************** log file

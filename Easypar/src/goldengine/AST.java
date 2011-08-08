@@ -309,7 +309,8 @@ public class AST {
 						String ls_str;
 						String coresStr = Arrays.toString(cores).replace("[", "").replace("]", "").replace(" ", "");
 						System.out.println("Running " + filename);
-						String cmd = "\"C:\\Users\\i67077\\Documents\\Visual Studio 2010\\Projects\\Spawner\\Spawner\\bin\\Debug\\spawner.exe\"";
+						//String cmd = "\"C:\\Users\\James\\EasyPar\\Easypar\\spawner.exe\"";
+						String cmd = "spawner.exe";
 						
 						//add arguments to the cmd string
 						cmd += " " + filename + " " + coresStr;
@@ -353,7 +354,8 @@ public class AST {
 				{
 					//System.out.println("Sub Programs of " + runsubprograms.ParentProgram.id);
 					ArrayList<Id> subPrograms = symbols.get(runsubprograms.ParentProgram.id).subPrograms;
-					String cmd = "\"C:\\Users\\i67077\\Documents\\Visual Studio 2010\\Projects\\Spawner\\Spawner\\bin\\Debug\\spawner.exe\"";
+					//String cmd = "\"C:\\Users\\i67077\\Documents\\Visual Studio 2010\\Projects\\Spawner\\Spawner\\bin\\Debug\\spawner.exe\"";
+					String cmd = "spawner.exe";
 					for(int i=0; i < subPrograms.size(); i++)
 					{
 						String filename = symbols.get(subPrograms.get(i).id).ProgramName;
@@ -454,14 +456,14 @@ public class AST {
 				assign(id("cpuOne"),cpu(0,1)),
 				assign(id("cpuTwo"),cpu(2)),
 				assign(id("cpuThree"),cpu(3)),
-				assign(id("mainProgram"), Program(id("mainProgram.ps1")/*, id("cpuOne")*/)),
+				assign(id("mainProgram"), Program(id("mainProgram.ps1"))),
 				assignCPU(id("mainProgram"), id("cpuOne")),
-				assign(id("subProgramOne"), Program(id("subProgramOne.ps1")/*, id("cpuOne")*/)),
+				assign(id("subProgramOne"), Program(id("subProgramOne.ps1"))),
 				assignCPU(id("subProgramOne"), id("cpuTwo")),
-				assign(id("subProgramTwo"), Program(id("subProgramTwo.ps2")/*, id("cpuTwo")*/)),
+				assign(id("subProgramTwo"), Program(id("subProgramTwo.ps1"))),
 				assignCPU(id("subProgramTwo"), id("cpuThree")),
-				addsubprogram(id("mainProgram"), id("subProgramOne")/*, id("cpuOne")*/),
-				addsubprogram(id("mainProgram"), id("subProgramTwo")/*, id("cpuOne")*/),
+				addsubprogram(id("mainProgram"), id("subProgramOne")),
+				addsubprogram(id("mainProgram"), id("subProgramTwo")),
 				runprogram(id("mainProgram")),
 				runsubprogram(id("mainProgram"))
 				);

@@ -1,0 +1,1 @@
+CPU cpuone = CPU(0,1);
